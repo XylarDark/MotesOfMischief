@@ -16,13 +16,14 @@ New concepts. Dice Types & Mote Duality, Graveyard, Phases and New Beginning/End
 Dice Types
 ============================================================================
 - There are 6 'motes' that represent dice types. Light, Grey, Neutral, Blue, Red, Dark.
-- The five die in Liar's Dice are given a mote type and a sixth mote type at random is chosen as the prize for the game. 
+- The five die in Liar's Dice are given a mote type and a sixth mote type at random is chosen as the prize for the game.
+- This section is continued after the Graveyard and Phase sections.
 
 Mote Duality
 ============================================================================
 - The 6 mote types are broken into 2 different groups, the Light and Dark groups or
 "Redeemed" & "Cursed". These two groups are gameplay and aesthetically opposed and these details are reflected in the way the motes are played due to phase order and the dice effects themselves.
-This section is continued after the Graveyard and Phase sections.
+
 
 Graveyard
 ============================================================================
