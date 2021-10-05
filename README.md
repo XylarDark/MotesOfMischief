@@ -78,9 +78,8 @@ you may remove this die from the game to remove another die in the graveyard fro
 
 New Beginning Game Concept
 ============================================================================
-At the beginning of the game all players may bid on:
-- whether they will be the last player remaining. 6/1 bidding odds
-- they will be part of the winning Mote Duality party, 3/1 bidding odds.
+At the beginning of the game all players may bid on whether they will be the victor of the next match. The calculation for how much a winner gets from a match is:
+Pool + ( Player Bet * ( PlayerBet / PlayerTotalFunds ) ) = Winnings
 
 New End of Game Concept
 ============================================================================
