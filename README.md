@@ -24,13 +24,6 @@ Mote Duality
 - The 6 mote types are broken into 2 different groups, the Light and Dark groups or
 "Redeemed" & "Cursed". These two groups are gameplay and aesthetically opposed and these details are reflected in the way the motes are played due to phase order and the dice effects themselves.
 
-
-Graveyard
-============================================================================
-- When a player loses a bluff they must send a dice to the graveyard.
-- A player may only play the die that they lose but may target any other die in the graveyard unless specified otherwise.
-- Die in the graveyard can only be played during the phases that they are given based on their Mote Duality (See Mote Duality and Phase sections).
-
 Phases
 ============================================================================
 Sunset, Night, Sunrise:
@@ -75,6 +68,12 @@ Dark
 =============================================================================
 If this die is in the graveyard, any time during the night,
 you may remove this die from the game to remove another die in the graveyard from the game
+
+Graveyard
+============================================================================
+- When a player loses a bluff they must send a dice to the graveyard.
+- A player may only play the die that they lose but may target any other die in the graveyard unless specified otherwise.
+- Die in the graveyard can only be played during the phases that they are given based on their Mote Duality (See Mote Duality and Phase sections).
 
 New Beginning Game Concept
 ============================================================================
