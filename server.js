@@ -18,8 +18,8 @@ function Player(id, host, name) {
   this.name = name;
   this.type = null;
   this.entity = null;
+  this.ready = null;
 }
-
 function Motes(playerId, motes) {
   this.id = playerId;
   this.motes = motes;
@@ -31,29 +31,32 @@ function Lobby(id, hostId, lobby) {
   this.lobby = lobby;
 }
 io.on("connection", function(socket) {
-  socket.on("createLobby", function() {
+  socket.on("createLobby", (callback) => {    
     const newid = new ShortUniqueId({ length: 6 });
     const newname = new ShortUniqueId({ length: 4 });
-    var id = newid();
+    var lobbyId = newid();
     var name = newname();
-
+    
+    socket.join(lobbyId);
+    
     var lobby = {};
     var hostId = socket.id;
     var isHost = true;
     var hostPlayer = new Player(hostId, isHost, name);
-
+    
     lobby[hostId] = hostPlayer;
-    var newLobby = new Lobby(id, hostId, lobby);
-
-    lobbies[id] = newLobby;
-
-    socket.emit("createLobbyData", {
-      id: id,
+    
+    var newLobby = new Lobby(lobbyId, hostId, lobby);
+    lobbies[lobbyId] = newLobby;
+    
+    callback({
+      id: lobbyId,
       lobby: lobby,
-      hostId: hostId
+      hostId: hostId      
     });
+
   });
-  socket.on("joinLobby", function(data) {
+  socket.on("joinLobby", (data,callback) => {
     var playerId = socket.id;
     var isHost = false;
     const newname = new ShortUniqueId({ length: 4 });
@@ -61,24 +64,27 @@ io.on("connection", function(socket) {
 
     var player = new Player(playerId, isHost, name);
     var lobbyId = data.lobbyId;
-
-    if (lobbies[lobbyId]) {
-      if (Object.keys(lobbies[lobbyId].lobby).length < 7) {
+    const rooms = io.of("/").adapter.rooms;
+    
+    if (rooms.has(lobbyId)) {      
+      if (rooms.size < 7) {
+        socket.join(lobbyId);
         lobbies[lobbyId].lobby[playerId] = player;
 
-        socket.emit("joinLobbyStatus", {
+        callback({
           joinlobbystatus: "success",
-          message: "Joined lobby.",
+          message: playerId + " Joined lobby.",
           lobby: lobbies[lobbyId].lobby,
           id: playerId
         });
-        socket.broadcast.emit("playerJoined", { player: player });
+        io.to(lobbyId).emit("playerJoined", { player: player });
       }
-    } else {
-      socket.emit("joinLobbyStatus", {
-        joinlobbystatus: "fail",
-        message: "Failed to join lobby."
-      });
+      else{
+         callback({
+          joinlobbystatus: "fail",
+          message: " Failed to Join lobby."
+        });       
+      }
     }
   });
 
@@ -89,28 +95,21 @@ io.on("connection", function(socket) {
     if (!lobbies[lobbyId]) return;
     delete lobbies[lobbyId];
     if (!players[socket.hostId]) return;
+    socket.leave(lobbyId);
     delete players[socket.hostId];
   });
   socket.on("leaveLobby", function(data) {
     var lobbyId = data.lobbyId;
     var playerId = data.id;
-    console.log(lobbies[lobbyId]);
     if (!lobbies[lobbyId]) return;
 
     delete lobbies[lobbyId].lobby[playerId];
 
     if (!players[socket.hostId]) return;
+    socket.leave(lobbyId);
     delete players[socket.hostId];
   });
-  socket.on("initialize", function() {
-    //1
-    var id = socket.id;
-    var newPlayer = new Player(id);
-    players[id] = newPlayer;
 
-    socket.emit("playerData", { id: id, players: players });
-    socket.broadcast.emit("playerJoined", newPlayer);
-  });
   socket.on("setType", function(data) {
     var lobbyId = data.lobbyId;
     var id = data.id;
@@ -127,25 +126,23 @@ io.on("connection", function(socket) {
 
     if (noType) {
       lobbies[lobbyId].lobby[id].type = type;
-      socket.broadcast.emit("updateTypes", { id: id, type: type });
+      io.to(lobbyId).emit("updateTypes", { id: id, type: type });
     }
   });
+  //   socket.on("initialize", function() {
+//     var id = socket.id;
+//     var newPlayer = new Player(id);
+//     players[id] = newPlayer;
 
-  socket.on("initialize", function() {
-    //1
-    var id = socket.id;
-    var newPlayer = new Player(id);
-    players[id] = newPlayer;
-
-    socket.emit("playerData", { id: id, players: players });
-    socket.broadcast.emit("playerJoined", newPlayer);
-  });
-  socket.on("disconnect", function() {
-    if (!players[socket.id]) return;
-    delete players[socket.id];
-    // Update clients with the new player killed
-    socket.broadcast.emit("killPlayer", socket.id);
-  });
+//     socket.emit("playerData", { id: id, players: players });
+//     socket.broadcast.emit("playerJoined", newPlayer);
+//   });
+  // socket.on("disconnect", function() {
+  //   if (!players[socket.id]) return;
+  //   delete players[socket.id];
+  //   // Update clients with the new player killed
+  //   socket.broadcast.emit("killPlayer", socket.id);
+  // });
 });
 
 console.log("Server started");
