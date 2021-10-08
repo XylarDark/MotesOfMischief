@@ -66,8 +66,8 @@ io.on("connection", function(socket) {
     var lobbyId = data.lobbyId;
     const rooms = io.of("/").adapter.rooms;
     
-    if (rooms.has(lobbyId)) {      
-      if (rooms.size < 7) {
+    if (rooms.has(lobbyId)) {   
+      if (rooms.get(lobbyId).size < 6) {
         socket.join(lobbyId);
         lobbies[lobbyId].lobby[playerId] = player;
 
@@ -87,7 +87,32 @@ io.on("connection", function(socket) {
       }
     }
   });
-
+  socket.on("startGame",function(data){
+    var lobbyId = data.lobbyId;
+    var lobby = lobbies[lobbyId];
+    const rooms = io.of("/").adapter.rooms;
+    if (rooms.has(lobbyId)) {
+      io.to(lobbyId).emit("startGame",{lobby:lobby});
+    }
+  });  
+  socket.on("playerReady",function(data){
+    var lobbyId = data.lobbyId;
+    var id = data.id;
+    const rooms = io.of("/").adapter.rooms;
+    if (rooms.has(lobbyId)) {
+      lobbies[lobbyId].lobby[id].ready = true;
+      io.to(lobbyId).emit("playerReady",{id:id});
+    }
+  });
+  socket.on("playerNotReady",function(data){
+    var lobbyId = data.lobbyId;
+    var id = data.id;
+    const rooms = io.of("/").adapter.rooms;
+    if (rooms.has(lobbyId)) {
+      lobbies[lobbyId].lobby[id].ready = false;
+      io.to(lobbyId).emit("playerNotReady",{id:id});
+    }
+  });  
   socket.on("destroyLobby", function(data) {
     var lobbyId = data.lobbyId;
     var hostId = data.hostId;
