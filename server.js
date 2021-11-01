@@ -5,8 +5,6 @@ var options = {
 var io = require("socket.io")(server, options);
 
 var players = {};
-var motes = {};
-var graveyard = {};
 var lobbies = {};
 
 const ShortUniqueId = require("short-unique-id");
@@ -16,20 +14,23 @@ function Player(id, host, name) {
   //boolean
   this.host = host;
   this.name = name;
+  
   this.type = null;
   this.entity = null;
+  
+  this.cup = {};
+  this.graveyard = {};
+  
   this.ready = null;
-}
-function Motes(playerId, motes) {
-  this.id = playerId;
-  this.motes = motes;
-  this.entity = null;
+  this.turnOrder = null;
 }
 function Lobby(id, hostId, lobby) {
   this.id = id;
   this.hostId = hostId;
   this.lobby = lobby;
+  this.graveyard = {};
 }
+
 io.on("connection", function(socket) {
   socket.on("createLobby", (callback) => {    
     const newid = new ShortUniqueId({ length: 6 });
@@ -40,13 +41,15 @@ io.on("connection", function(socket) {
     socket.join(lobbyId);
     
     var lobby = {};
+    var graveyard = {};
     var hostId = socket.id;
     var isHost = true;
     var hostPlayer = new Player(hostId, isHost, name);
     
     lobby[hostId] = hostPlayer;
     
-    var newLobby = new Lobby(lobbyId, hostId, lobby);
+    var newLobby = new Lobby(lobbyId, hostId, lobby, graveyard);
+    
     lobbies[lobbyId] = newLobby;
     
     callback({
@@ -67,7 +70,7 @@ io.on("connection", function(socket) {
     const rooms = io.of("/").adapter.rooms;
     
     if (rooms.has(lobbyId)) {   
-      if (rooms.get(lobbyId).size < 6) {
+      if (rooms.get(lobbyId).size < 5) {
         socket.join(lobbyId);
         lobbies[lobbyId].lobby[playerId] = player;
 
@@ -87,15 +90,81 @@ io.on("connection", function(socket) {
       }
     }
   });
-  socket.on("startGame",function(data){
+  //
+  socket.on('nextPhase', function(data){
+    var playerId = data.id;
+    var lobbyId = data.lobbyId;
+    var nextPhase = data.phase;
+    
+    if(nextPhase == 'one'){
+      
+    }else if(nextPhase == 'two'){
+      
+    }else if(nextPhase == 'three'){
+      
+    }else if(nextPhase == 'mischief'){
+      
+    }else if(nextPhase == 'rollTurnOrder'){
+      
+    }
+  });
+  // Phase One - player turn priority -> player has nothing to play or skips
+  // --> next player in turn order plays
+  //Phase One is a Light Phase - players play their graveyards in turn order 
+  //and there is no stack
+  socket.on("phaseOne",(data,callback)=>{
     var lobbyId = data.lobbyId;
     var lobby = lobbies[lobbyId];
+    var turnOrder = data.turnOrder;
+    var nextTurn = turnOrder++;
+    
+    if(lobby.graveyard.size != 0){
+      //lobby object
+      var lobbyGraveyard = lobby.graveyard;
+      //Takes the lobby array that holds players out of the lobby object
+      lobby = lobby.lobby;
+      var playerId = data.id;
+      
+      for (var key in lobby) {      
+        if (lobby.hasOwnProperty(key)) {      
+          //lobby[key] == Player Object
+          if(lobby[key].id == playerId && lobby[key].graveyard.size > 0){
+              //Player has a graveyard and plays it
+              callback({
+                isDie: true,
+                playerGraveyard: lobby[key].graveyard,
+                lobbyGraveyard: lobbyGraveyard
+              });
+          }
+        }
+      }
+      //next player turn
+      callback({
+        isDie: false
+      });
+    }
+  });
+  socket.on("startGame",function(data){
+
+    var lobbyId = data.lobbyId;
+
     const rooms = io.of("/").adapter.rooms;
     if (rooms.has(lobbyId)) {
+      var lobby = lobbies[lobbyId].lobby;
+      var randomTurnOrder = [1, 2, 3, 4, 5];
+      shuffle(randomTurnOrder);
+      var i = 0;
+      for (var key in lobby) {      
+        if (lobby.hasOwnProperty(key)) {
+          lobby[key].turnOrder = randomTurnOrder[i];
+          i++;
+        }
+      }
       io.to(lobbyId).emit("startGame",{lobby:lobby});
     }
   });  
   socket.on("playerReady",function(data){
+    
     var lobbyId = data.lobbyId;
     var id = data.id;
     const rooms = io.of("/").adapter.rooms;
@@ -154,21 +223,25 @@ io.on("connection", function(socket) {
       io.to(lobbyId).emit("updateTypes", { id: id, type: type });
     }
   });
-  //   socket.on("initialize", function() {
-//     var id = socket.id;
-//     var newPlayer = new Player(id);
-//     players[id] = newPlayer;
-
-//     socket.emit("playerData", { id: id, players: players });
-//     socket.broadcast.emit("playerJoined", newPlayer);
-//   });
-  // socket.on("disconnect", function() {
-  //   if (!players[socket.id]) return;
-  //   delete players[socket.id];
-  //   // Update clients with the new player killed
-  //   socket.broadcast.emit("killPlayer", socket.id);
-  // });
 });
+
+function shuffle(array) {
+  let currentIndex = array.length,  randomIndex;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
 
 console.log("Server started");
 server.listen(3000);
