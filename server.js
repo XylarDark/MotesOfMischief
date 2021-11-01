@@ -116,7 +116,6 @@ io.on("connection", function(socket) {
     var lobbyId = data.lobbyId;
     var lobby = lobbies[lobbyId];
     var turnOrder = data.turnOrder;
-    var nextTurn = turnOrder++;
     
     if(lobby.graveyard.size != 0){
       //lobby object
@@ -132,6 +131,7 @@ io.on("connection", function(socket) {
               //Player has a graveyard and plays it
               callback({
                 isDie: true,
+                turnOrder: turnOrder,
                 playerGraveyard: lobby[key].graveyard,
                 lobbyGraveyard: lobbyGraveyard
               });
@@ -140,10 +140,17 @@ io.on("connection", function(socket) {
       }
       //next player turn
       callback({
-        isDie: false
+        isDie: false,
+        turnOrder: turnOrder
       });
     }
   });
+  
+  socket.on('nextGraveyard',function(data){});
+  socket.on('nextPhase',function(data){});
+  socket.on('nextTurn',function(data){});
+  socket.on('nextRound',function(data){});
+  
   socket.on("startGame",function(data){
 
     var lobbyId = data.lobbyId;
